@@ -4,10 +4,11 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [streamer, setStreamer] = useState("");
-  const [ws, setWs] = useState(null); // Adiciona o estado ws
+  const [prevStreamer, setPrevStreamer] = useState(""); // Adiciona o estado para o streamer anterior
+  const [ws, setWs] = useState(null);
 
   useEffect(() => {
-    let newWs; // Move a declaração para o escopo mais amplo
+    let newWs;
 
     if (isConnected) {
       newWs = new WebSocket("ws://localhost:3001");
@@ -36,11 +37,19 @@ function App() {
 
     return () => {
       if (newWs) {
-        // Altera para newWs para garantir que a referência esteja correta
         newWs.close();
       }
     };
   }, [isConnected, streamer]);
+
+  useEffect(() => {
+    // Realiza handleDisconnect com o nome anterior quando o streamer é alterado
+    if (prevStreamer && prevStreamer !== streamer && isConnected) {
+      handleDisconnect(prevStreamer);
+    }
+
+    setPrevStreamer(streamer);
+  }, [streamer, prevStreamer, isConnected]);
 
   const handleConnect = async () => {
     try {
@@ -62,14 +71,14 @@ function App() {
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (prevStreamer) => {
     try {
       const response = await fetch("http://localhost:3001/stopConnection", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ streamerChannelName: streamer }),
+        body: JSON.stringify({ streamerChannelName: prevStreamer }),
       });
 
       if (response.ok) {
