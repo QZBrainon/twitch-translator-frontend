@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 
 function App() {
   const [messages, setMessages] = useState([]);
-  const [streamer, setStreamer] = useState("");
   const [isConnected, setIsConnected] = useState(false);
-  const [ws, setWs] = useState(null);
+  const [streamer, setStreamer] = useState("");
+  const [ws, setWs] = useState(null); // Adiciona o estado ws
 
   useEffect(() => {
+    let newWs; // Move a declaração para o escopo mais amplo
+
     if (isConnected) {
-      // Establish WebSocket connection when isConnected is true
-      const newWs = new WebSocket("ws://localhost:3001"); // Replace with your WebSocket server URL
+      newWs = new WebSocket("ws://localhost:3001");
 
       newWs.onopen = () => {
         console.log("WebSocket connection opened");
@@ -23,48 +24,62 @@ function App() {
       newWs.onclose = () => {
         console.log("WebSocket connection closed");
         setIsConnected(false);
+        setWs(null);
       };
 
       setWs(newWs);
     } else {
-      // Close WebSocket connection when isConnected is false
       if (ws) {
         ws.close();
-        setWs(null);
       }
     }
 
-    // Clean up WebSocket on component unmount
     return () => {
-      if (ws) {
-        ws.close();
-        setWs(null);
+      if (newWs) {
+        // Altera para newWs para garantir que a referência esteja correta
+        newWs.close();
       }
     };
-  }, [isConnected]);
+  }, [isConnected, streamer]);
 
-  const handleConnect = () => {
-    setIsConnected(true);
-
-    // Send a request to start the connection on the server
-    fetch("http://localhost:3001/startConnection", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ streamerChannelName: streamer }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error("Error connecting to server:", error);
+  const handleConnect = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/startConnection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ streamerChannelName: streamer }),
       });
+
+      if (response.ok) {
+        setIsConnected(true);
+      } else {
+        console.error("Failed to connect:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error connecting:", error.message);
+    }
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
+  const handleDisconnect = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/stopConnection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ streamerChannelName: streamer }),
+      });
+
+      if (response.ok) {
+        setIsConnected(false);
+      } else {
+        console.error("Failed to disconnect:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error disconnecting:", error.message);
+    }
   };
 
   const handleClean = () => {
@@ -87,10 +102,11 @@ function App() {
         <button onClick={handleConnect}>Connect</button>
       )}
       <button onClick={handleClean}>Clean</button>
+
       <ul>
         {messages.map((msg, index) => (
           <li key={index}>
-            {msg.author}: {msg.message}
+            [{msg.channel}] {msg.author}: {msg.message}
           </li>
         ))}
       </ul>
