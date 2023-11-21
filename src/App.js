@@ -4,6 +4,15 @@ import io from "socket.io-client";
 function App() {
   const [messages, setMessages] = useState([]);
   const [streamer, setStreamer] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+
+  const handleConnect = () => {
+    setIsConnected(true);
+  };
+
+  const handleDisconnect = () => {
+    setIsConnected(false);
+  };
 
   return (
     <div className="App">
@@ -15,7 +24,11 @@ function App() {
           onChange={(e) => setStreamer(e.target.value)}
         />
       </label>
-      <button>Connect</button>
+      {isConnected ? (
+        <button onClick={handleDisconnect}>Disconnect</button>
+      ) : (
+        <button onClick={handleConnect}>Connect</button>
+      )}
       <ul>
         {messages.map((msg) => (
           <li key={msg.username}>
