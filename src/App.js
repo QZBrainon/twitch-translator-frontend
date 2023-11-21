@@ -1,23 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from "react";
+import io from "socket.io-client";
 
 function App() {
+  const [messages, setMessages] = useState([]);
+  const [streamer, setStreamer] = useState("");
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <label>
+        Streamer:
+        <input
+          type="text"
+          value={streamer}
+          onChange={(e) => setStreamer(e.target.value)}
+        />
+      </label>
+      <button>Connect</button>
+      <ul>
+        {messages.map((msg) => (
+          <li key={msg.username}>
+            {msg.username}:{msg.message}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
