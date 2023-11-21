@@ -4,7 +4,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [streamer, setStreamer] = useState("");
-  const [prevStreamer, setPrevStreamer] = useState(""); // Adiciona o estado para o streamer anterior
+  const [prevStreamer, setPrevStreamer] = useState("");
   const [ws, setWs] = useState(null);
 
   useEffect(() => {
@@ -43,7 +43,6 @@ function App() {
   }, [isConnected, streamer]);
 
   useEffect(() => {
-    // Realiza handleDisconnect com o nome anterior quando o streamer é alterado
     if (prevStreamer && prevStreamer !== streamer && isConnected) {
       handleDisconnect(prevStreamer);
     }
@@ -71,14 +70,16 @@ function App() {
     }
   };
 
-  const handleDisconnect = async (prevStreamer) => {
+  const handleDisconnect = async (customStreamer = null) => {
     try {
       const response = await fetch("http://localhost:3001/stopConnection", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ streamerChannelName: prevStreamer }),
+        body: JSON.stringify({
+          streamerChannelName: customStreamer || streamer,
+        }),
       });
 
       if (response.ok) {
@@ -106,9 +107,9 @@ function App() {
         />
       </label>
       {isConnected ? (
-        <button onClick={handleDisconnect}>Disconnect</button>
+        <button onClick={() => handleDisconnect()}>Disconnect</button>
       ) : (
-        <button onClick={handleConnect}>Connect</button>
+        <button onClick={() => handleConnect()}>Connect</button>
       )}
       <button onClick={handleClean}>Clean</button>
 
